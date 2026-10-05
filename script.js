@@ -160,6 +160,36 @@ const RATIOS = [
   [3, 5], [5, 3],
 ];
 
+// ===== ラウンドの設定と状態 =====
+const TOTAL_QUESTIONS = 10;
+const SCORES = { Perfect: 100, Great: 70, Good: 40, Miss: 0 };
+const BEST_KEY = "hiritsuDojo.bestScore";
+
+// 1ラウンド分の状態（startRound で作り直す）
+let round = null;
+
+// ===== 自己ベストの保存（localStorage が使えなくても止まらないようにする） =====
+// 保存されていない・読めない場合は null を返す
+function loadBest() {
+  try {
+    const value = Number(localStorage.getItem(BEST_KEY));
+    // getItem が null のときは Number(null) = 0 になるので、0 以下は「記録なし」とみなす
+    return Number.isFinite(value) && value > 0 ? value : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+// 保存できたら true、できなかったら false
+function saveBest(score) {
+  try {
+    localStorage.setItem(BEST_KEY, String(score));
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
 // ===== 画面の要素 =====
 const board = document.getElementById("board");
 const track = document.getElementById("track");
@@ -243,6 +273,7 @@ function newQuestion() {
   board.classList.remove("answered"); // 正解の印も隠れる（style.css）
   result.hidden = true;
   actionButton.textContent = "決定";
+  updateProgress();
 
   // 真ん中から始めると 1:1 のヒントになるので、ランダムな位置に置く
   moveCursor(Math.random() * line.totalLength);
@@ -283,20 +314,81 @@ function judge() {
   document.getElementById("your-ratio").textContent = formatRatio(cursorDistance);
   document.getElementById("correct-ratio").textContent =
     formatRatio(correctDistance) + "（" + a + ":" + b + "）";
+  // 得点を加算する
+  const score = SCORES[rating];
+  round.totalScore += score;
+  round.counts[rating]++;
+  document.getElementById("question-score").textContent = score;
+  updateProgress();
   result.hidden = false;
 
   answered = true;
   board.classList.add("answered");
-  actionButton.textContent = "次の問題";
+  actionButton.textContent =
+    round.questionNumber >= TOTAL_QUESTIONS ? "結果を見る" : "次へ";
 }
 
 actionButton.addEventListener("click", () => {
-  if (answered) {
-    newQuestion();
-  } else {
+  if (!answered) {
     judge();
+  } else if (round.questionNumber >= TOTAL_QUESTIONS) {
+    showFinal();
+  } else {
+    round.questionNumber++;
+    newQuestion();
   }
 });
+
+// ===== ラウンドの進行 =====
+function updateProgress() {
+  document.getElementById("progress-number").textContent = round.questionNumber;
+  document.getElementById("progress-total").textContent = TOTAL_QUESTIONS;
+  document.getElementById("total-score").textContent = round.totalScore;
+}
+
+function startRound() {
+  round = {
+    questionNumber: 1,
+    totalScore: 0,
+    counts: { Perfect: 0, Great: 0, Good: 0, Miss: 0 },
+  };
+  document.getElementById("final").hidden = true;
+  document.getElementById("game").hidden = false;
+  newQuestion();
+}
+
+function showFinal() {
+  const total = round.totalScore;
+  const maxScore = TOTAL_QUESTIONS * SCORES.Perfect;
+  const previousBest = loadBest();
+
+  // 0点は記録しない。同点は更新としない（超えたときだけ更新。記録なしからの初記録は更新）
+  let isNewBest = false;
+  let saveFailed = false;
+  if (total > 0 && (previousBest === null || total > previousBest)) {
+    isNewBest = true;
+    saveFailed = !saveBest(total);
+  }
+  // 画面に出す自己ベスト（保存に失敗しても今回の点は表示する）
+  const best = isNewBest ? total : previousBest;
+
+  document.getElementById("final-score").textContent =
+    total + " / " + maxScore + " 点";
+  document.getElementById("count-perfect").textContent = round.counts.Perfect;
+  document.getElementById("count-great").textContent = round.counts.Great;
+  document.getElementById("count-good").textContent = round.counts.Good;
+  document.getElementById("count-miss").textContent = round.counts.Miss;
+  document.getElementById("final-this").textContent = total;
+  document.getElementById("final-best").textContent =
+    best === null ? "記録なし" : best + " 点";
+  document.getElementById("new-best").hidden = !isNewBest;
+  document.getElementById("save-warning").hidden = !saveFailed;
+
+  document.getElementById("game").hidden = true;
+  document.getElementById("final").hidden = false;
+}
+
+document.getElementById("restart").addEventListener("click", startRound);
 
 // ===== ドラッグ処理（マウスもタッチも Pointer Events で共通） =====
 let dragging = false;
@@ -327,4 +419,4 @@ function endDrag() {
 board.addEventListener("pointerup", endDrag);
 board.addEventListener("pointercancel", endDrag);
 
-newQuestion();
+startRound();

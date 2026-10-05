@@ -108,3 +108,45 @@ h1 {
 #rating.great   { color: #2a9d8f; }
 #rating.good    { color: #457b9d; }
 #rating.miss    { color: #888; }
+
+/* ===== ラウンド進行・最終結果 ===== */
+#progress {
+  font-weight: bold;
+}
+
+#final-score {
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+#final-counts {
+  list-style: none;
+  padding: 0;
+}
+
+#new-best {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #e63946;
+}
+
+#save-warning {
+  font-size: 0.85rem;
+  color: #888;
+}
+
+#restart {
+  min-width: 160px;
+  height: 48px;
+  font-size: 1.1rem;
+  border: none;
+  border-radius: 8px;
+  background: #264653;
+  color: #fff;
+  cursor: pointer;
+}
+
+/* hidden 属性が他の指定に負けないようにする */
+[hidden] {
+  display: none !important;
+}

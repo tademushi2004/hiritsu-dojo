@@ -10,26 +10,51 @@
 <body>
   <h1>比率道場</h1>
 
-  <p id="question"></p>
+  <!-- ゲーム画面（出題・回答・結果） -->
+  <div id="game">
+    <p id="progress">
+      第 <span id="progress-number"></span> 問 / <span id="progress-total"></span>
+      　累計: <span id="total-score"></span> 点
+    </p>
 
-  <svg id="board" viewBox="0 0 400 300">
-    <polyline id="track" />
-    <circle id="point-a" class="endpoint" r="6" />
-    <circle id="point-b" class="endpoint" r="6" />
-    <text id="label-a" class="label">A</text>
-    <text id="label-b" class="label">B</text>
-    <!-- 正解位置の印（決定後だけ表示） -->
-    <circle id="answer-mark" r="10" />
-    <circle id="cursor" r="10" />
-  </svg>
+    <p id="question"></p>
 
-  <button id="action" type="button">決定</button>
+    <svg id="board" viewBox="0 0 400 300">
+      <polyline id="track" />
+      <circle id="point-a" class="endpoint" r="6" />
+      <circle id="point-b" class="endpoint" r="6" />
+      <text id="label-a" class="label">A</text>
+      <text id="label-b" class="label">B</text>
+      <!-- 正解位置の印（決定後だけ表示） -->
+      <circle id="answer-mark" r="10" />
+      <circle id="cursor" r="10" />
+    </svg>
 
-  <div id="result" hidden>
-    <p id="rating"></p>
-    <p>誤差: <span id="error"></span></p>
-    <p>あなたの比率: <span id="your-ratio"></span></p>
-    <p>正解の比率: <span id="correct-ratio"></span></p>
+    <button id="action" type="button">決定</button>
+
+    <div id="result" hidden>
+      <p id="rating"></p>
+      <p>今回の得点: <span id="question-score"></span> 点</p>
+      <p>誤差: <span id="error"></span></p>
+      <p>あなたの比率: <span id="your-ratio"></span></p>
+      <p>正解の比率: <span id="correct-ratio"></span></p>
+    </div>
+  </div>
+
+  <!-- 最終結果画面（10問終了後だけ表示） -->
+  <div id="final" hidden>
+    <h2>最終結果</h2>
+    <p id="final-score"></p>
+    <ul id="final-counts">
+      <li>Perfect: <span id="count-perfect"></span> 問</li>
+      <li>Great: <span id="count-great"></span> 問</li>
+      <li>Good: <span id="count-good"></span> 問</li>
+      <li>Miss: <span id="count-miss"></span> 問</li>
+    </ul>
+    <p>今回: <span id="final-this"></span> 点 ／ 自己ベスト: <span id="final-best"></span></p>
+    <p id="new-best" hidden>ベスト更新!</p>
+    <p id="save-warning" hidden>自己ベストを保存できませんでした</p>
+    <button id="restart" type="button">もう一度遊ぶ</button>
   </div>
 </body>
 </html>
