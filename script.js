@@ -26,10 +26,23 @@ function closestDistance(x, y) {
   return Math.min(Math.max(s, 0), totalLength);
 }
 
+// ===== 出題する比率 =====
+// [A側, B側]。1:2 と 2:1 のように向きを入れ替えたものも入れている。
+const RATIOS = [
+  [1, 1],
+  [1, 2], [2, 1],
+  [1, 3], [3, 1],
+  [2, 3], [3, 2],
+  [3, 5], [5, 3],
+];
+
 // ===== 画面の要素 =====
 const board = document.getElementById("board");
 const cursor = document.getElementById("cursor");
-const debug = document.getElementById("debug");
+const answerMark = document.getElementById("answer-mark");
+const questionText = document.getElementById("question");
+const actionButton = document.getElementById("action");
+const result = document.getElementById("result");
 
 // 線と点A・Bを配置する
 const track = document.getElementById("track");
@@ -58,8 +71,6 @@ function moveCursor(s) {
   const p = pointAt(s);
   cursor.setAttribute("cx", p.x);
   cursor.setAttribute("cy", p.y);
-  // 動作確認用（ステップ2で消す）
-  debug.textContent = "確認用: Aから " + (s / totalLength * 100).toFixed(1) + "%";
 }
 
 // 画面上のマウス位置を、SVG の中の座標に直す
@@ -67,6 +78,79 @@ function toSvgPoint(event) {
   const point = new DOMPoint(event.clientX, event.clientY);
   return point.matrixTransform(board.getScreenCTM().inverse());
 }
+
+// ===== 出題と判定 =====
+let currentRatio = null; // 今の問題の比率 [A側, B側]
+let answered = false;    // true のときは結果表示中
+
+function newQuestion() {
+  // 直前と同じ問題は避ける
+  let ratio;
+  do {
+    ratio = RATIOS[Math.floor(Math.random() * RATIOS.length)];
+  } while (ratio === currentRatio);
+  currentRatio = ratio;
+
+  questionText.textContent =
+    "A:B = " + ratio[0] + ":" + ratio[1] + " の位置にカーソルを置いてください";
+
+  answered = false;
+  board.classList.remove("answered"); // 正解の印も隠れる（style.css）
+  result.hidden = true;
+  actionButton.textContent = "決定";
+
+  // 真ん中から始めると 1:1 のヒントになるので、ランダムな位置に置く
+  moveCursor(Math.random() * totalLength);
+}
+
+// 誤差(%)から評価を返す
+function getRating(errorPercent) {
+  if (errorPercent <= 2) return "Perfect";
+  if (errorPercent <= 5) return "Great";
+  if (errorPercent <= 10) return "Good";
+  return "Miss";
+}
+
+// Aからの距離を「A:B = 35.2 : 64.8」の形の文字にする
+function formatRatio(s) {
+  const aPart = s / totalLength * 100;
+  return "A:B = " + aPart.toFixed(1) + " : " + (100 - aPart).toFixed(1);
+}
+
+function judge() {
+  const [a, b] = currentRatio;
+  const correctDistance = totalLength * a / (a + b);
+  // 誤差 = 正解位置とのずれ ÷ 線の全長 × 100
+  const errorPercent = Math.abs(correctDistance - cursorDistance) / totalLength * 100;
+  const rating = getRating(errorPercent);
+
+  // 正解位置の印を置く（表示されるのは下で answered クラスを付けたとき）
+  const p = pointAt(correctDistance);
+  answerMark.setAttribute("cx", p.x);
+  answerMark.setAttribute("cy", p.y);
+
+  // 結果の欄を埋める
+  const ratingText = document.getElementById("rating");
+  ratingText.textContent = rating;
+  ratingText.className = rating.toLowerCase();
+  document.getElementById("error").textContent = errorPercent.toFixed(1) + "%";
+  document.getElementById("your-ratio").textContent = formatRatio(cursorDistance);
+  document.getElementById("correct-ratio").textContent =
+    formatRatio(correctDistance) + "（" + a + ":" + b + "）";
+  result.hidden = false;
+
+  answered = true;
+  board.classList.add("answered");
+  actionButton.textContent = "次の問題";
+}
+
+actionButton.addEventListener("click", () => {
+  if (answered) {
+    newQuestion();
+  } else {
+    judge();
+  }
+});
 
 // ===== ドラッグ処理（マウスもタッチも Pointer Events で共通） =====
 let dragging = false;
@@ -77,6 +161,8 @@ function followPointer(event) {
 }
 
 board.addEventListener("pointerdown", (event) => {
+  // 結果表示中はカーソルを動かせない
+  if (answered) return;
   dragging = true;
   board.classList.add("dragging");
   // SVG の外に出ても追いかけるようにする
@@ -95,5 +181,4 @@ function endDrag() {
 board.addEventListener("pointerup", endDrag);
 board.addEventListener("pointercancel", endDrag);
 
-// 最初はランダムな位置に置く（真ん中だと 1:1 のヒントになるため）
-moveCursor(Math.random() * totalLength);
+newQuestion();

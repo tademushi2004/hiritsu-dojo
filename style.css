@@ -11,6 +11,11 @@ h1 {
   font-size: 1.5rem;
 }
 
+#question {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
 #board {
   display: block;
   width: 100%;
@@ -56,7 +61,47 @@ h1 {
   cursor: grabbing;
 }
 
-#debug {
-  color: #888;
-  font-size: 0.9rem;
+/* 結果表示中はカーソルを動かせないので、つかむ形の表示をやめる */
+#board.answered #cursor {
+  cursor: default;
 }
+
+#answer-mark {
+  fill: #2a9d8f;
+  fill-opacity: 0.8;
+  stroke: #fff;
+  stroke-width: 2;
+  pointer-events: none;
+  /* 回答中は隠し、決定後（answered）だけ表示する */
+  display: none;
+}
+
+#board.answered #answer-mark {
+  display: inline;
+}
+
+#action {
+  margin-top: 16px;
+  min-width: 160px;
+  height: 48px;
+  font-size: 1.1rem;
+  border: none;
+  border-radius: 8px;
+  background: #264653;
+  color: #fff;
+  cursor: pointer;
+}
+
+#result p {
+  margin: 6px 0;
+}
+
+#rating {
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+#rating.perfect { color: #e9a400; }
+#rating.great   { color: #2a9d8f; }
+#rating.good    { color: #457b9d; }
+#rating.miss    { color: #888; }
