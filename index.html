@@ -3,58 +3,80 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f1e7">
   <title>比率道場</title>
   <link rel="stylesheet" href="style.css">
   <script src="script.js" defer></script>
 </head>
 <body>
-  <h1>比率道場</h1>
+  <main>
+    <h1>比率道場</h1>
 
-  <!-- ゲーム画面（出題・回答・結果） -->
-  <div id="game">
-    <p id="progress">
-      第 <span id="progress-number"></span> 問 / <span id="progress-total"></span>
-      　累計: <span id="total-score"></span> 点
-    </p>
+    <!-- ゲーム画面（出題・回答・結果） -->
+    <div id="game">
+      <p id="progress">
+        <span class="progress-question">第 <span id="progress-number"></span> 問 / <span id="progress-total"></span></span>
+        <span class="progress-total-score">累計 <span id="total-score"></span> 点</span>
+      </p>
 
-    <p id="question"></p>
+      <p id="question"></p>
 
-    <svg id="board" viewBox="0 0 400 300">
-      <polyline id="track" />
-      <circle id="point-a" class="endpoint" r="6" />
-      <circle id="point-b" class="endpoint" r="6" />
-      <text id="label-a" class="label">A</text>
-      <text id="label-b" class="label">B</text>
-      <!-- 正解位置の印（決定後だけ表示） -->
-      <circle id="answer-mark" r="10" />
-      <circle id="cursor" r="10" />
-    </svg>
+      <svg id="board" viewBox="0 0 400 300">
+        <polyline id="track" />
+        <circle id="point-a" class="endpoint" r="6" />
+        <circle id="point-b" class="endpoint" r="6" />
+        <text id="label-a" class="label">A</text>
+        <text id="label-b" class="label">B</text>
+        <!-- 正解位置の印（決定後だけ表示） -->
+        <circle id="answer-mark" r="17" />
+        <circle id="cursor" r="12" />
+      </svg>
 
-    <button id="action" type="button">決定</button>
+      <!-- 結果（決定後だけ表示）。スマホで画面外に出ないよう、ボタンの上に置く -->
+      <div id="result" hidden>
+        <p id="rating"></p>
+        <p class="result-sub">
+          誤差 <span id="error"></span>　／　今回の得点 <span id="question-score"></span> 点
+        </p>
+        <div class="compare">
+          <div class="compare-item">
+            <p class="compare-title"><span class="dot dot-you"></span>あなた</p>
+            <p class="compare-value" id="your-ratio"></p>
+          </div>
+          <div class="compare-item">
+            <p class="compare-title"><span class="dot dot-correct"></span>正解</p>
+            <p class="compare-value" id="correct-ratio"></p>
+          </div>
+        </div>
+      </div>
 
-    <div id="result" hidden>
-      <p id="rating"></p>
-      <p>今回の得点: <span id="question-score"></span> 点</p>
-      <p>誤差: <span id="error"></span></p>
-      <p>あなたの比率: <span id="your-ratio"></span></p>
-      <p>正解の比率: <span id="correct-ratio"></span></p>
+      <button id="action" class="button" type="button">決定</button>
     </div>
-  </div>
 
-  <!-- 最終結果画面（10問終了後だけ表示） -->
-  <div id="final" hidden>
-    <h2>最終結果</h2>
-    <p id="final-score"></p>
-    <ul id="final-counts">
-      <li>Perfect: <span id="count-perfect"></span> 問</li>
-      <li>Great: <span id="count-great"></span> 問</li>
-      <li>Good: <span id="count-good"></span> 問</li>
-      <li>Miss: <span id="count-miss"></span> 問</li>
-    </ul>
-    <p>今回: <span id="final-this"></span> 点 ／ 自己ベスト: <span id="final-best"></span></p>
-    <p id="new-best" hidden>ベスト更新!</p>
-    <p id="save-warning" hidden>自己ベストを保存できませんでした</p>
-    <button id="restart" type="button">もう一度遊ぶ</button>
-  </div>
+    <!-- 最終結果画面（10問終了後だけ表示） -->
+    <div id="final" hidden>
+      <h2>最終結果</h2>
+      <p id="final-score"></p>
+      <ul id="final-counts">
+        <li class="count-perfect-card">Perfect<strong><span id="count-perfect"></span></strong></li>
+        <li class="count-great-card">Great<strong><span id="count-great"></span></strong></li>
+        <li class="count-good-card">Good<strong><span id="count-good"></span></strong></li>
+        <li class="count-miss-card">Miss<strong><span id="count-miss"></span></strong></li>
+      </ul>
+      <p id="new-best" hidden>ベスト更新!</p>
+      <div class="compare">
+        <div class="compare-item">
+          <p class="compare-title">今回</p>
+          <p class="compare-value"><span id="final-this"></span> 点</p>
+        </div>
+        <div class="compare-item">
+          <p class="compare-title">自己ベスト</p>
+          <p class="compare-value" id="final-best"></p>
+        </div>
+      </div>
+      <p id="save-warning" hidden>自己ベストを保存できませんでした</p>
+      <button id="restart" class="button" type="button">もう一度遊ぶ</button>
+    </div>
+  </main>
 </body>
 </html>

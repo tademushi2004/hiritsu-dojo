@@ -262,8 +262,9 @@ function newQuestion() {
   } while (ratio === currentRatio);
   currentRatio = ratio;
 
-  questionText.textContent =
-    "A:B = " + ratio[0] + ":" + ratio[1] + " の位置にカーソルを置いてください";
+  // 比率の部分だけ <strong> で強調する（ratio は上の RATIOS の数値なので安全）
+  questionText.innerHTML =
+    "A:B = <strong>" + ratio[0] + ":" + ratio[1] + "</strong> の位置にカーソルを置いてください";
 
   // 問題ごとに新しい線を作る
   line = makeRandomLine();

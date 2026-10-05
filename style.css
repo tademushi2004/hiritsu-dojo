@@ -1,49 +1,122 @@
+/* ===== 色・余白のまとめ ===== */
+:root {
+  --paper: #f6f1e7;      /* 生成りの背景 */
+  --card: #fffdf8;       /* カードの白 */
+  --ink: #2b2a28;        /* 墨色の文字 */
+  --ink-soft: #6f6a60;   /* 補助的な文字 */
+  --line: #ddd5c5;       /* 罫線 */
+  --indigo: #1d4e89;     /* 藍（正解・ボタン） */
+  --vermilion: #c8553d;  /* 朱（あなた） */
+  --gold: #b8860b;
+  --radius: 12px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  /* 横スクロールを出さない */
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
   padding: 16px;
-  font-family: sans-serif;
-  background: #fafafa;
-  color: #222;
+  font-family: "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;
+  background: var(--paper);
+  color: var(--ink);
   text-align: center;
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+
+main {
+  max-width: 600px;
+  margin: 0 auto;
 }
 
 h1 {
-  font-size: 1.5rem;
+  margin: 4px 0 12px;
+  font-size: 1.4rem;
+  letter-spacing: 0.15em;
+}
+
+h2 {
+  margin: 8px 0;
+  font-size: 1.3rem;
+}
+
+/* ===== 進行状況・問題文 ===== */
+#progress {
+  display: flex;
+  justify-content: space-between;
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+}
+
+/* 各まとまりの中では改行させない */
+.progress-question,
+.progress-total-score {
+  white-space: nowrap;
+}
+
+#progress-number,
+#total-score {
+  font-weight: bold;
+  color: var(--ink);
 }
 
 #question {
-  font-size: 1.2rem;
+  margin: 8px 0 12px;
+  font-size: clamp(1.15rem, 4.8vw, 1.5rem);
   font-weight: bold;
+  line-height: 1.4;
 }
 
+#question strong {
+  display: inline-block;
+  padding: 0 0.3em;
+  font-size: 1.25em;
+  color: var(--indigo);
+  background: #e6edf6;
+  border-radius: 6px;
+}
+
+/* ===== ボード ===== */
 #board {
   display: block;
   width: 100%;
-  max-width: 600px;
+  height: auto;
+  max-height: 60vh;
   margin: 0 auto;
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  /* ドラッグ中に画面がスクロールしないようにする */
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 2px 6px rgba(60, 50, 30, 0.08);
+  /* ドラッグ中に画面がスクロール・拡大されないようにする */
   touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 #track {
   fill: none; /* polyline は指定しないと内側が塗りつぶされる */
-  stroke: #444;
+  stroke: var(--ink);
   stroke-width: 4;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
 .endpoint {
-  fill: #444;
+  fill: var(--ink);
 }
 
 .label {
   font-size: 18px;
   font-weight: bold;
-  fill: #444;
+  fill: var(--ink);
   text-anchor: middle;
   dominant-baseline: central; /* 文字の中心を指定した座標に合わせる */
   /* 文字を選択できないようにして、ドラッグの邪魔をさせない */
@@ -51,9 +124,10 @@ h1 {
   pointer-events: none;
 }
 
+/* あなたの位置（朱の塗り） */
 #cursor {
-  fill: #e63946;
-  fill-opacity: 0.8;
+  fill: var(--vermilion);
+  fill-opacity: 0.9;
   stroke: #fff;
   stroke-width: 2;
   cursor: grab;
@@ -69,11 +143,11 @@ h1 {
   cursor: default;
 }
 
+/* 正解の位置（藍のリング。塗らないので、カーソルが重なっても両方見える） */
 #answer-mark {
-  fill: #2a9d8f;
-  fill-opacity: 0.8;
-  stroke: #fff;
-  stroke-width: 2;
+  fill: none;
+  stroke: var(--indigo);
+  stroke-width: 4;
   pointer-events: none;
   /* 回答中は隠し、決定後（answered）だけ表示する */
   display: none;
@@ -83,67 +157,161 @@ h1 {
   display: inline;
 }
 
-#action {
-  margin-top: 16px;
-  min-width: 160px;
-  height: 48px;
-  font-size: 1.1rem;
+/* ===== ボタン ===== */
+.button {
+  display: block;
+  width: 100%;
+  max-width: 400px;
+  min-height: 52px;
+  margin: 16px auto 0;
+  padding: 0 24px;
+  font-family: inherit;
+  font-size: 1.2rem;
+  font-weight: bold;
+  letter-spacing: 0.1em;
   border: none;
-  border-radius: 8px;
-  background: #264653;
+  border-radius: var(--radius);
+  background: var(--indigo);
   color: #fff;
   cursor: pointer;
+  box-shadow: 0 3px 0 #123659;
+  /* ダブルタップで拡大されないようにする */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.button:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #123659;
+}
+
+/* ===== 結果 ===== */
+#result {
+  margin-top: 12px;
+  padding: 12px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
 }
 
 #result p {
-  margin: 6px 0;
+  margin: 0;
 }
 
 #rating {
-  font-size: 2rem;
+  font-size: 2.2rem;
   font-weight: bold;
+  line-height: 1.2;
 }
 
-#rating.perfect { color: #e9a400; }
-#rating.great   { color: #2a9d8f; }
-#rating.good    { color: #457b9d; }
-#rating.miss    { color: #888; }
+#rating.perfect { color: var(--gold); }
+#rating.great   { color: #2a7f6f; }
+#rating.good    { color: var(--indigo); }
+#rating.miss    { color: var(--ink-soft); }
 
-/* ===== ラウンド進行・最終結果 ===== */
-#progress {
+#result .result-sub {
+  margin: 4px 0 10px;
+  color: var(--ink-soft);
+}
+
+/* 「あなた」と「正解」を並べる */
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.compare-item {
+  padding: 8px 4px;
+  background: var(--paper);
+  border-radius: 8px;
+}
+
+.compare-title {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.compare-value {
+  margin: 2px 0 0;
   font-weight: bold;
+  font-size: 0.95rem;
+  overflow-wrap: anywhere;
+}
+
+/* ボード上の印と同じ見た目の凡例 */
+.dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 6px;
+  border-radius: 50%;
+  vertical-align: -1px;
+}
+
+.dot-you {
+  background: var(--vermilion);
+}
+
+.dot-correct {
+  border: 3px solid var(--indigo);
+}
+
+/* ===== 最終結果画面 ===== */
+#final {
+  padding: 8px 0;
 }
 
 #final-score {
-  font-size: 2rem;
+  margin: 8px 0 16px;
+  font-size: 2.4rem;
   font-weight: bold;
+  color: var(--indigo);
 }
 
 #final-counts {
-  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin: 0 0 16px;
   padding: 0;
+  list-style: none;
 }
 
+#final-counts li {
+  padding: 8px 2px;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+#final-counts strong {
+  display: block;
+  font-size: 1.6rem;
+  color: var(--ink);
+}
+
+#final-counts .count-perfect-card strong { color: var(--gold); }
+#final-counts .count-great-card strong   { color: #2a7f6f; }
+#final-counts .count-good-card strong    { color: var(--indigo); }
+
 #new-best {
+  margin: 0 0 12px;
+  padding: 6px;
   font-size: 1.5rem;
   font-weight: bold;
-  color: #e63946;
+  color: #fff;
+  background: var(--vermilion);
+  border-radius: var(--radius);
 }
 
 #save-warning {
+  margin: 8px 0 0;
   font-size: 0.85rem;
-  color: #888;
-}
-
-#restart {
-  min-width: 160px;
-  height: 48px;
-  font-size: 1.1rem;
-  border: none;
-  border-radius: 8px;
-  background: #264653;
-  color: #fff;
-  cursor: pointer;
+  color: var(--ink-soft);
 }
 
 /* hidden 属性が他の指定に負けないようにする */
