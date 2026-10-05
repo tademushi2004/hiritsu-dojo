@@ -29,9 +29,11 @@ h1 {
 }
 
 #track {
+  fill: none; /* polyline は指定しないと内側が塗りつぶされる */
   stroke: #444;
   stroke-width: 4;
   stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .endpoint {
@@ -43,6 +45,7 @@ h1 {
   font-weight: bold;
   fill: #444;
   text-anchor: middle;
+  dominant-baseline: central; /* 文字の中心を指定した座標に合わせる */
   /* 文字を選択できないようにして、ドラッグの邪魔をさせない */
   user-select: none;
   pointer-events: none;
