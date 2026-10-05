@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>比率道場</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <h1>比率道場</h1>
+
+  <svg id="board" viewBox="0 0 400 300">
+    <line id="track" />
+    <circle id="point-a" class="endpoint" r="6" />
+    <circle id="point-b" class="endpoint" r="6" />
+    <text id="label-a" class="label">A</text>
+    <text id="label-b" class="label">B</text>
+    <circle id="cursor" r="10" />
+  </svg>
+
+  <!-- 動作確認用の一時的な表示（ステップ2で消す） -->
+  <p id="debug"></p>
+</body>
+</html>
