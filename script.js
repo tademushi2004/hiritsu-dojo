@@ -201,7 +201,7 @@ const cursor = document.getElementById("cursor");
 const answerMark = document.getElementById("answer-mark");
 const questionText = document.getElementById("question");
 const actionButton = document.getElementById("action");
-const result = document.getElementById("result");
+const app = document.getElementById("app");
 
 // 線・点A・点B・ラベルを画面に配置する
 function drawLine() {
@@ -252,7 +252,33 @@ function toSvgPoint(event) {
 
 // ===== 出題と判定 =====
 let currentRatio = null; // 今の問題の比率 [A側, B側]
-let answered = false;    // true のときは結果表示中
+let answered = false;    // true のときは結果表示中（setPhase が phase と一緒に更新する）
+
+// ===== 局面（ボタンの状態） =====
+// ボタンは1つだけ。局面に合わせて、ラベルとスタイル（#app の data-phase）が切り替わる。
+//   answering   : 回答前             → 「決定」
+//   result      : 回答後（途中の問題） → 「次へ」
+//   result-last : 回答後（最終問題）   → 「結果を見る」
+//   final       : 最終結果画面        → 「もう一度遊ぶ」
+const PHASE_LABELS = {
+  answering: "決定",
+  result: "次へ",
+  "result-last": "結果を見る",
+  final: "もう一度遊ぶ",
+};
+const INPUT_LOCK_MS = 300; // 局面が切り替わった直後に、入力を無視する時間
+let phase = "answering";
+let phaseChangedAt = 0;
+
+// phase と answered を必ず同時に更新する（食い違いを防ぐ）
+function setPhase(next) {
+  phase = next;
+  answered = next === "result" || next === "result-last";
+  phaseChangedAt = performance.now();
+  app.dataset.phase = next;
+  board.classList.toggle("answered", answered); // 正解の印の表示・非表示（style.css）
+  actionButton.textContent = PHASE_LABELS[next];
+}
 
 function newQuestion() {
   // 直前と同じ問題は避ける
@@ -270,15 +296,15 @@ function newQuestion() {
   line = makeRandomLine();
   drawLine();
 
-  answered = false;
-  board.classList.remove("answered"); // 正解の印も隠れる（style.css）
-  result.hidden = true;
-  actionButton.textContent = "決定";
+  setPhase("answering");
   updateProgress();
 
   // 真ん中から始めると 1:1 のヒントになるので、ランダムな位置に置く
   moveCursor(Math.random() * line.totalLength);
 }
+
+// 評価ごとのアイコン（色だけに頼らず、形でも区別できるようにする）
+const RATING_ICONS = { Perfect: "◎", Great: "○", Good: "△", Miss: "✕" };
 
 // 誤差(%)から評価を返す
 function getRating(errorPercent) {
@@ -308,9 +334,9 @@ function judge() {
   answerMark.setAttribute("cy", p.y);
 
   // 結果の欄を埋める
-  const ratingText = document.getElementById("rating");
-  ratingText.textContent = rating;
-  ratingText.className = rating.toLowerCase();
+  document.getElementById("rating").className = rating.toLowerCase();
+  document.getElementById("rating-icon").textContent = RATING_ICONS[rating];
+  document.getElementById("rating-label").textContent = rating;
   document.getElementById("error").textContent = errorPercent.toFixed(1) + "%";
   document.getElementById("your-ratio").textContent = formatRatio(cursorDistance);
   document.getElementById("correct-ratio").textContent =
@@ -321,23 +347,36 @@ function judge() {
   round.counts[rating]++;
   document.getElementById("question-score").textContent = score;
   updateProgress();
-  result.hidden = false;
 
-  answered = true;
-  board.classList.add("answered");
-  actionButton.textContent =
-    round.questionNumber >= TOTAL_QUESTIONS ? "結果を見る" : "次へ";
+  setPhase(round.questionNumber >= TOTAL_QUESTIONS ? "result-last" : "result");
 }
 
-actionButton.addEventListener("click", () => {
-  if (!answered) {
+// ボタン（クリック・タップ・Enter キー）の動作。どの局面でも同じ入口を通る
+function handleAction() {
+  // 局面が切り替わった直後は無視する（素早い二重タップで、結果を見ずに進まないように）
+  if (performance.now() - phaseChangedAt < INPUT_LOCK_MS) return;
+
+  if (phase === "answering") {
     judge();
-  } else if (round.questionNumber >= TOTAL_QUESTIONS) {
-    showFinal();
-  } else {
+  } else if (phase === "result") {
     round.questionNumber++;
     newQuestion();
+  } else if (phase === "result-last") {
+    showFinal();
+  } else {
+    startRound();
   }
+}
+
+actionButton.addEventListener("click", handleAction);
+
+// Enter キーでも操作できる。押しっぱなしの自動連打（event.repeat）は無視する
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter") return;
+  // ボタンにフォーカスがあるときの標準の click と二重にならないよう、ここで一本化する
+  event.preventDefault();
+  if (event.repeat) return;
+  handleAction();
 });
 
 // ===== ラウンドの進行 =====
@@ -345,6 +384,13 @@ function updateProgress() {
   document.getElementById("progress-number").textContent = round.questionNumber;
   document.getElementById("progress-total").textContent = TOTAL_QUESTIONS;
   document.getElementById("total-score").textContent = round.totalScore;
+
+  // 進捗バー: 今の問題までを塗る
+  const bar = document.getElementById("progress-bar");
+  bar.setAttribute("aria-valuenow", round.questionNumber);
+  Array.from(bar.children).forEach((segment, i) => {
+    segment.classList.toggle("done", i < round.questionNumber);
+  });
 }
 
 function startRound() {
@@ -353,8 +399,6 @@ function startRound() {
     totalScore: 0,
     counts: { Perfect: 0, Great: 0, Good: 0, Miss: 0 },
   };
-  document.getElementById("final").hidden = true;
-  document.getElementById("game").hidden = false;
   newQuestion();
 }
 
@@ -385,11 +429,9 @@ function showFinal() {
   document.getElementById("new-best").hidden = !isNewBest;
   document.getElementById("save-warning").hidden = !saveFailed;
 
-  document.getElementById("game").hidden = true;
-  document.getElementById("final").hidden = false;
+  setPhase("final");
+  document.getElementById("final").scrollTop = 0;
 }
-
-document.getElementById("restart").addEventListener("click", startRound);
 
 // ===== ドラッグ処理（マウスもタッチも Pointer Events で共通） =====
 let dragging = false;

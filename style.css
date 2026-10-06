@@ -3,55 +3,73 @@
   --paper: #f6f1e7;      /* 生成りの背景 */
   --card: #fffdf8;       /* カードの白 */
   --ink: #2b2a28;        /* 墨色の文字 */
-  --ink-soft: #6f6a60;   /* 補助的な文字 */
+  --ink-soft: #6f6a60;   /* 補助的な文字（背景に対して 4.5:1 以上） */
   --line: #ddd5c5;       /* 罫線 */
   --indigo: #1d4e89;     /* 藍（正解・ボタン） */
   --vermilion: #c8553d;  /* 朱（あなた） */
-  --gold: #b8860b;
   --radius: 12px;
+
+  /* 評価の色。背景色と文字色の組み合わせで、文字は 4.5:1 以上、明るさにも差をつけてある */
+  --perfect-bg: #004b7a; --perfect-fg: #ffffff;
+  --great-bg:   #7cc4ee; --great-fg:   #1f1d1a;
+  --good-bg:    #d98c00; --good-fg:    #1f1d1a;
+  --miss-bg:    #c25400; --miss-fg:    #ffffff;
 }
 
 * {
   box-sizing: border-box;
 }
 
-html {
-  /* 横スクロールを出さない */
-  overflow-x: hidden;
+/* ページ全体はスクロールさせない（100vh は使わず、100dvh を使う） */
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
 body {
-  margin: 0;
-  padding: 16px;
   font-family: "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;
   background: var(--paper);
   color: var(--ink);
   text-align: center;
   line-height: 1.5;
-  overflow-x: hidden;
 }
 
-main {
-  max-width: 600px;
-  margin: 0 auto;
+/* 画面全体を縦に並べる: 上部 / 中央（伸縮） / 下部（固定の操作バー） */
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;   /* dvh に対応していない古いブラウザ用 */
+  height: 100dvh;
 }
 
 h1 {
-  margin: 4px 0 12px;
-  font-size: 1.4rem;
-  letter-spacing: 0.15em;
+  margin: 0;
+  font-size: 0.85rem;
+  letter-spacing: 0.2em;
+  color: var(--ink-soft);
 }
 
 h2 {
-  margin: 8px 0;
-  font-size: 1.3rem;
+  margin: 4px 0 8px;
+  font-size: 1.2rem;
 }
 
-/* ===== 進行状況・問題文 ===== */
+/* ===== 上部: 進捗と問題文 ===== */
+#top {
+  flex: none;
+  max-width: 600px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 8px 16px 4px;
+}
+
 #progress {
   display: flex;
   justify-content: space-between;
-  margin: 0 0 8px;
+  margin: 2px 0 6px;
   font-size: 0.95rem;
   color: var(--ink-soft);
 }
@@ -68,28 +86,61 @@ h2 {
   color: var(--ink);
 }
 
+/* 10個に区切った進捗バー */
+#progress-bar {
+  display: flex;
+  gap: 3px;
+}
+
+#progress-bar span {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: #d9d2c2;
+}
+
+#progress-bar span.done {
+  background: var(--indigo);
+}
+
 #question {
-  margin: 8px 0 12px;
-  font-size: clamp(1.15rem, 4.8vw, 1.5rem);
+  margin: 8px 0 4px;
+  font-size: clamp(1.05rem, 4.6vw, 1.4rem);
   font-weight: bold;
-  line-height: 1.4;
+  line-height: 1.35;
 }
 
 #question strong {
   display: inline-block;
   padding: 0 0.3em;
-  font-size: 1.25em;
+  font-size: 1.2em;
   color: var(--indigo);
   background: #e6edf6;
   border-radius: 6px;
 }
 
-/* ===== ボード ===== */
+/* ===== 中央: 線エリア ===== */
+#stage {
+  position: relative;
+  flex: 1;
+  min-height: 0; /* 中身が大きくても、ここが伸び縮みして収まる */
+  display: flex;
+  flex-direction: column;
+  padding: 4px 16px 8px;
+}
+
+#game {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
 #board {
-  display: block;
+  position: absolute;
+  inset: 0;
   width: 100%;
-  height: auto;
-  max-height: 60vh;
+  max-width: 600px;
+  height: 100%;
   margin: 0 auto;
   background: var(--card);
   border: 1px solid var(--line);
@@ -157,13 +208,29 @@ h2 {
   display: inline;
 }
 
-/* ===== ボタン ===== */
+/* ===== 下部: 固定の操作バー ===== */
+#bar {
+  flex: none;
+  background: var(--card);
+  border-top: 1px solid var(--line);
+  padding: 10px 16px;
+  /* iPhone のホームバーと重ならないようにする */
+  padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
+}
+
+#bar-inner {
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+/* ===== ボタン（1つだけ。ラベルとスタイルが局面で切り替わる） ===== */
 .button {
   display: block;
   width: 100%;
-  max-width: 400px;
   min-height: 52px;
-  margin: 16px auto 0;
+  margin: 10px 0 0;
   padding: 0 24px;
   font-family: inherit;
   font-size: 1.2rem;
@@ -185,33 +252,109 @@ h2 {
   box-shadow: 0 1px 0 #123659;
 }
 
-/* ===== 結果 ===== */
-#result {
-  margin-top: 12px;
-  padding: 12px;
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
+/* キーボード操作のときのフォーカスをはっきり見せる */
+.button:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 3px;
 }
 
-#result p {
+/* 回答後・最終結果では、色を変えて「次へ進む」ことが分かるようにする */
+#app[data-phase="result"] .button,
+#app[data-phase="result-last"] .button {
+  background: #0b3a37;
+  box-shadow: 0 3px 0 #05201f;
+}
+
+/* ===== 結果パネル（場所は最初から確保。中身だけがせり上がる） ===== */
+#result {
+  position: relative;
+  height: 124px;
+  overflow: hidden;
+}
+
+.result-hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0 8px;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+
+#app[data-phase="result"] .result-hint,
+#app[data-phase="result-last"] .result-hint {
+  display: none;
+}
+
+.result-body {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  /* 回答前は見えない位置・透明（visibility も隠して、読み上げの対象から外す） */
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(16px);
+}
+
+#app[data-phase="result"] .result-body,
+#app[data-phase="result-last"] .result-body {
+  visibility: visible;
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+}
+
+.result-body p {
   margin: 0;
 }
 
-#rating {
-  font-size: 2.2rem;
-  font-weight: bold;
-  line-height: 1.2;
+.result-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
-#rating.perfect { color: var(--gold); }
-#rating.great   { color: #2a7f6f; }
-#rating.good    { color: var(--indigo); }
-#rating.miss    { color: var(--ink-soft); }
+/* 評価バッジ: 色だけでなく、アイコン（形）と文字を必ず併記する */
+#rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 14px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  line-height: 1.3;
+  border-radius: 999px;
+}
 
-#result .result-sub {
-  margin: 4px 0 10px;
+#rating-icon {
+  font-size: 1.3em;
+  line-height: 1;
+}
+
+#rating.perfect { background: var(--perfect-bg); color: var(--perfect-fg); }
+#rating.great   { background: var(--great-bg);   color: var(--great-fg); }
+#rating.good    { background: var(--good-bg);    color: var(--good-fg); }
+#rating.miss    { background: var(--miss-bg);    color: var(--miss-fg); }
+
+.result-sub {
+  font-size: 1rem;
   color: var(--ink-soft);
+  text-align: right;
+}
+
+.result-sub b {
+  color: var(--ink);
+}
+
+.result-score {
+  font-size: 1.2rem;
 }
 
 /* 「あなた」と「正解」を並べる */
@@ -222,21 +365,22 @@ h2 {
 }
 
 .compare-item {
-  padding: 8px 4px;
+  padding: 6px 4px;
   background: var(--paper);
   border-radius: 8px;
 }
 
 .compare-title {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: var(--ink-soft);
 }
 
 .compare-value {
-  margin: 2px 0 0;
+  margin: 0;
   font-weight: bold;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
+  line-height: 1.3;
   overflow-wrap: anywhere;
 }
 
@@ -258,14 +402,20 @@ h2 {
   border: 3px solid var(--indigo);
 }
 
-/* ===== 最終結果画面 ===== */
+/* ===== 最終結果画面（中央エリアの中。はみ出したらここだけスクロール） ===== */
 #final {
-  padding: 8px 0;
+  flex: 1;
+  min-height: 0;
+  max-width: 560px;
+  width: 100%;
+  margin: 0 auto;
+  overflow-y: auto;
+  padding: 4px 0 8px;
 }
 
 #final-score {
-  margin: 8px 0 16px;
-  font-size: 2.4rem;
+  margin: 4px 0 12px;
+  font-size: 2.2rem;
   font-weight: bold;
   color: var(--indigo);
 }
@@ -274,7 +424,7 @@ h2 {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 8px;
-  margin: 0 0 16px;
+  margin: 0 0 12px;
   padding: 0;
   list-style: none;
 }
@@ -282,21 +432,24 @@ h2 {
 #final-counts li {
   padding: 8px 2px;
   font-size: 0.85rem;
-  color: var(--ink-soft);
-  background: var(--card);
-  border: 1px solid var(--line);
   border-radius: 8px;
+}
+
+#final-counts .icon {
+  display: block;
+  font-size: 1.3rem;
+  line-height: 1.2;
 }
 
 #final-counts strong {
   display: block;
   font-size: 1.6rem;
-  color: var(--ink);
 }
 
-#final-counts .count-perfect-card strong { color: var(--gold); }
-#final-counts .count-great-card strong   { color: #2a7f6f; }
-#final-counts .count-good-card strong    { color: var(--indigo); }
+#final-counts .count-perfect-card { background: var(--perfect-bg); color: var(--perfect-fg); }
+#final-counts .count-great-card   { background: var(--great-bg);   color: var(--great-fg); }
+#final-counts .count-good-card    { background: var(--good-bg);    color: var(--good-fg); }
+#final-counts .count-miss-card    { background: var(--miss-bg);    color: var(--miss-fg); }
 
 #new-best {
   margin: 0 0 12px;
@@ -304,7 +457,7 @@ h2 {
   font-size: 1.5rem;
   font-weight: bold;
   color: #fff;
-  background: var(--vermilion);
+  background: #a63d2a; /* 白文字で 4.5:1 以上 */
   border-radius: var(--radius);
 }
 
@@ -314,7 +467,106 @@ h2 {
   color: var(--ink-soft);
 }
 
+#final .compare-value {
+  font-size: 1.1rem;
+}
+
+/* ===== 局面による表示の切り替え ===== */
+#app[data-phase="final"] #game,
+#app[data-phase="final"] #top-info,
+#app[data-phase="final"] #result {
+  display: none;
+}
+
+#app:not([data-phase="final"]) #final {
+  display: none;
+}
+
 /* hidden 属性が他の指定に負けないようにする */
 [hidden] {
   display: none !important;
+}
+
+/* ===== 横向きなど、高さの低い画面: パネルを1行のコンパクト表示にする ===== */
+@media (max-height: 480px) {
+  h1 {
+    display: none;
+  }
+
+  #top {
+    padding-top: 4px;
+  }
+
+  #question {
+    margin: 4px 0 2px;
+    font-size: 1rem;
+  }
+
+  #progress {
+    margin: 0 0 4px;
+    font-size: 0.85rem;
+  }
+
+  /* パネルとボタンを横に並べて、縦の場所を節約する */
+  #bar {
+    padding-top: 6px;
+    padding-bottom: calc(6px + env(safe-area-inset-bottom));
+  }
+
+  #bar-inner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  #result {
+    flex: 1;
+    height: 52px;
+  }
+
+  .result-hint {
+    font-size: 0.8rem;
+  }
+
+  .result-body .compare {
+    display: none; /* あなた/正解の比率は、コンパクト表示では省く */
+  }
+
+  #rating {
+    font-size: 1.1rem;
+    padding: 2px 10px;
+  }
+
+  .result-sub {
+    font-size: 0.85rem;
+  }
+
+  .result-score {
+    font-size: 1rem;
+  }
+
+  .button {
+    flex: none;
+    width: 40%;
+    max-width: 220px;
+    margin: 0;
+    min-height: 48px;
+  }
+
+  #final-score {
+    margin: 0 0 6px;
+    font-size: 1.6rem;
+  }
+
+  #final-counts strong {
+    font-size: 1.3rem;
+  }
+}
+
+/* ===== 動きを減らす設定の人には、アニメーションを使わない ===== */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
 }
