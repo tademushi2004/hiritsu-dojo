@@ -72,6 +72,7 @@ HTML、CSS、JavaScript のみで作られており、外部ライブラリは�
 ## 開発について
 
 要件定義から公開まで、Claude Codeと対話しながら進めました。
+開発の経緯と工夫した点は、[Zennの記事](https://zenn.dev/tademushi/articles/hiritsu-dojo-app)にまとめています。
 
 ## ライセンス
 
