@@ -11,6 +11,12 @@ https://tademushi2004.github.io/hiritsu-dojo/
 
 PCのブラウザとスマホの実機で動作を確認しています。
 
+## 画面
+
+<img src="docs/images/question.png" alt="比率が出題され、線の上にカーソルが置かれた出題画面" width="240">
+<img src="docs/images/result.png" alt="評価、誤差、あなたの位置と正解の位置が表示された判定の画面" width="240">
+<img src="docs/images/final.png" alt="得点、評価ごとの回数、自己ベストが表示された最終結果の画面" width="240">
+
 ## 遊び方
 
 - 1ラウンドは10問です。
